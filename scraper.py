@@ -293,8 +293,8 @@ def downloadCourse(session, c, sem):
     sections = itertools.count()
     name = c['key'].replace('/', '-') + '/'
     path = root + sem.replace('/', '-') + '/' + name
-    path = urllib.request.url2pathname(path.encode(
-        'utf-8')).replace(':', '-').replace('"', '')
+    path = path.replace(':', '-').replace('"', '')
+
     if not os.path.exists(path):
         os.makedirs(path)
     print('       +--' + colors.BOLD + name + colors.ENDC)
@@ -304,8 +304,9 @@ def downloadCourse(session, c, sem):
         if not os.path.exists(path + '.dump'):
             os.makedirs(path + '.dump')
 
-        dst = path + '.dump/' + c['key'].replace('/', '-').encode(
-            'utf-8') + '-' + str(datetime.date.today()) + '-full.html'
+        dst = path + '.dump/' + \
+            c['key'].replace('/', '-') + '-' + \
+            str(datetime.date.today()) + '-full.html'
         dst = dst.replace(':', '-').replace('"', '')
 
         with open(dst, 'wb') as f:
