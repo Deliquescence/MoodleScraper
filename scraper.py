@@ -121,7 +121,7 @@ def getCoursesForSemester(session, semester_id):
 def saveFile(session, src, path, name):
     global files
     next(files)
-    dst = path + name.decode('utf-8')
+    dst = path + name
     dst = dst.replace(':', '-').replace('"', '')
 
     try:
@@ -204,7 +204,7 @@ def downloadResource(session, res, path):
                 # it's obviously an ugly frameset site
                 src = soup.find_all('frame')[1]['src']
             name = os.path.basename(src)
-        name = urllib.request.url2pathname(name.encode('utf-8'))
+        name = urllib.request.url2pathname(name)
         saveFile(session, src, path, name)
     else:
         print('ERROR: ' + str(r.status) + ' ' + r.reason)
@@ -231,8 +231,8 @@ def downloadSection(session, s, path):
             res = f.find_all(class_='fp-filename-icon')
             label = res.pop(0).text
             path = root + '/' + label.replace('/', '-')
-            path = urllib.request.url2pathname(path.encode(
-                'utf-8')).replace(':', '-').replace('"', '')
+            path = urllib.request.url2pathname(
+                path).replace(':', '-').replace('"', '')
             if not os.path.exists(path):
                 os.makedirs(path)
             print('       |  +--' + colors.BOLD + label + colors.ENDC)
@@ -293,7 +293,7 @@ def downloadCourse(session, c, sem):
     sections = itertools.count()
     name = c['key'].replace('/', '-') + '/'
     path = root + sem.replace('/', '-') + '/' + name
-    path = path.replace(':', '-').replace('"', '')
+    path = urllib.request.url2pathname(path).replace(':', '-').replace('"', '')
 
     if not os.path.exists(path):
         os.makedirs(path)
