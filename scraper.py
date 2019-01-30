@@ -93,13 +93,11 @@ def getInfo(tag):
         c['sem'] = q[1]
         c['key'] = q[2].strip()
         c['name'] = p[1].strip()
-        c['type'] = p[2].strip().replace(' ', '-')
     elif len(p) == 1:
         c['course'] = p[0].strip()
         c['sem'] = 'X'
         c['key'] = p[0].strip()
         c['name'] = p[0].strip()
-        c['type'] = 'Allgemein'
     return c
 
 
@@ -307,7 +305,7 @@ def downloadCourse(session, c, sem):
             os.makedirs(path + '.dump')
 
         dst = path + '.dump/' + c['key'].replace('/', '-').encode(
-            'utf-8') + '-' + c['type'] + '-' + str(datetime.date.today()) + '-full.html'
+            'utf-8') + '-' + str(datetime.date.today()) + '-full.html'
         dst = dst.replace(':', '-').replace('"', '')
 
         with open(dst, 'wb') as f:
@@ -366,7 +364,7 @@ else:
     print(colors.WARNING + 'Available courses:' + colors.ENDC)
     for c in courses:
         print('[' + str(courses.index(c)) + ']: ' + c['key'] + '.' +
-              str(c['sem']) + ': ' + c['name'] + ' (' + c['type'] + ')')
+              str(c['sem']) + ': ' + c['name'])
 
 # confirmation
 c = input(colors.WARNING +
