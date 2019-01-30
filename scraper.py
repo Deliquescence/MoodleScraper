@@ -216,16 +216,16 @@ def downloadSection(session, s, path):
     global sections
     if s['id'] == 'section-0':
         try:
-            info = s.find(class_='activity label modtype_label ').get_text()
+            info = s.find(class_='activity label modtype_label').get_text()
         except AttributeError:
             pass
         else:
             saveInfo(path, info, '')
 
-        res = s.find_all(class_='activity resource modtype_resource ')
+        res = s.find_all(class_='activity resource modtype_resource')
         for r in res:
             downloadResource(session, r, path)
-        folders = s.find_all(class_='box generalbox foldertree')
+        folders = s.find_all(class_='activity folder modtype_folder')
         root = path
         for f in folders:
             res = f.find_all(class_='fp-filename-icon')
