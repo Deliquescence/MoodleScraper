@@ -103,19 +103,21 @@ def getInfo(tag):
     return c
 
 
-def getCoursesForSem(session, s):
-    r = session.get(baseurl + 'index.php?role=0&cat=1&csem=0&sem=' + s)
-    if(r.status_code == 200):
-        soup = BeautifulSoup(r.text, 'html.parser')
-        courses = list()
-        for o in soup.find_all('h3'):
-            if (len(o.find_all('a')) > 0):
-                c = getInfo(o.contents[0])
-                courses.append(c)
-        return courses
-    else:
+def getCoursesForSemester(session, semester_id):
+    r = session.get(
+        baseurl + 'blocks/course_overview/partial.php?categories=' + semester_id)
+
+    if(r.status_code != 200):
         print('ERROR: ' + str(r.status) + ' ' + r.reason)
         sys.exit()
+
+    soup = BeautifulSoup(r.text, 'html.parser')
+    courses = list()
+    for o in soup.find_all('h2'):
+        if (len(o.find_all('a')) > 0):
+            c = getInfo(o.contents[0])
+            courses.append(c)
+    return courses
 
 
 def saveFile(session, src, path, name):
@@ -356,7 +358,7 @@ while not ok:
 
 # get courses
 print("getting Courses...")
-courses = getCoursesForSem(session, s)
+courses = getCoursesForSemester(session, s)
 if not courses:
     print(colors.FAIL + 'No courses in this semester - Quitting!' + colors.ENDC)
     sys.exit()
