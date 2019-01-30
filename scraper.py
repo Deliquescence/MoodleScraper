@@ -61,21 +61,26 @@ def login(user, pwd):
 
 
 def getSemesters(ses):
-    r = ses.get(baseurl + 'index.php')
+    r = ses.get(baseurl + 'my/')
 
-    if(r.status_code == 200):
-        soup = BeautifulSoup(r.text, 'html.parser')
-        semesters = dict()
-        temp = soup.find(id='cmb_mc_semester')
-
-        for o in soup.find(id='cmb_mc_semester'):
-            if o != str('\n'):
-                if o.string != 'Alle Semester':
-                    semesters[o['value']] = o.string
-        return semesters
-    else:
+    if(r.status_code != 200):
         print('ERROR: ' + str(r.status) + ' ' + r.reason)
         sys.exit()
+
+    sem_ids = re.findall(r'catbox(\d+)', r.text)
+    if not sem_ids:
+        print("ERROR: Couldn't find any semesters! (Did the regex break?)")
+        sys.exit()
+
+    soup = BeautifulSoup(r.text, 'html.parser')
+    semesters = dict()
+    for id in sem_ids:
+        sem_header = soup.find(id=f'catbox{id}').find_next("h3")
+        # Trim "Click to show" after " - "
+        sem_name = sem_header.text.split(" - ")[0]
+        semesters[id] = sem_name
+
+    return semesters
 
 
 def getInfo(tag):
