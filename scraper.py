@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from requests import session
 from bs4 import BeautifulSoup
 import os
 import sys
+import requests
 import itertools
 import re
 import urllib.request
@@ -39,14 +39,25 @@ class colors:
 
 
 def login(user, pwd):
+    # Get login token
+    TOKEN_REGEX = r"<input type=\"hidden\" name=\"logintoken\" value=\"(.*)\">"
+
+    session = requests.Session()
+    r = session.get(baseurl + 'login/index.php')
+    match = re.search(TOKEN_REGEX, r.text)
+    if match is None:
+        print("ERROR: Couldn't find login token! (Did the regex break?)")
+        sys.exit()
+
+    token = match[1]
     authdata = {
-        'action': 'login',
+        'logintoken': token,
         'username': user,
         'password': pwd
     }
-    with session() as ses:
-        r = ses.post(baseurl + 'login/index.php', data=authdata)
-        return ses
+
+    _r = session.post(baseurl + 'login/index.php', data=authdata)
+    return session
 
 
 def getSemesters(ses):
