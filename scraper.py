@@ -2,12 +2,12 @@
 from requests import session
 from bs4 import BeautifulSoup
 import os, sys, itertools, re
-import urllib
-import ConfigParser
+import urllib.request, urllib.parse, urllib.error
+import configparser
 import datetime
 
 # read config
-config = ConfigParser.RawConfigParser()
+config = configparser.RawConfigParser()
 config.read('scraper.conf')
 
 username = config.get("scraper", "user");
@@ -47,19 +47,19 @@ def getSemesters(ses):
         temp = soup.find(id='cmb_mc_semester')
 
         for o in soup.find(id='cmb_mc_semester'):
-            if o != unicode('\n'):
+            if o != str('\n'):
                 if o.string != 'Alle Semester':
                     semesters[o['value']] = o.string
         return semesters
     else:
-        print 'ERROR: ' + str(r.status) + ' ' + r.reason
+        print('ERROR: ' + str(r.status) + ' ' + r.reason)
 	sys.exit()
 
 
 def getInfo(tag):
     c = dict()
     c['url'] = tag['href']
-    p = unicode(tag.string).split(',')
+    p = str(tag.string).split(',')
     if len(p) >= 3:
         q = p[0].split('.')
         c['course'] = q[0].strip()
@@ -87,24 +87,24 @@ def getCoursesForSem(session, s):
                 courses.append(c)
         return courses
     else:
-        print 'ERROR: ' + str(r.status) + ' ' + r.reason
+        print('ERROR: ' + str(r.status) + ' ' + r.reason)
 	sys.exit()
 
 
 def saveFile(session, src, path, name):
     global files
-    files.next()
+    next(files)
     dst = path + name.decode('utf-8')
     dst = dst.replace(':', '-').replace('"', '')
 
 
     try:
         with open(dst):
-            print '['+colors.OKBLUE+'skip'+colors.ENDC+'] |  |  +--%s' %name
+            print('['+colors.OKBLUE+'skip'+colors.ENDC+'] |  |  +--%s' %name)
             pass
     except IOError:
         with open(dst, 'wb') as handle:
-            print '['+colors.OKGREEN+'save'+colors.ENDC+'] |  |  +--%s' %name
+            print('['+colors.OKGREEN+'save'+colors.ENDC+'] |  |  +--%s' %name)
             r = session.get(src, stream=True)
             for block in r.iter_content(1024):
                 if not block:
@@ -114,42 +114,42 @@ def saveFile(session, src, path, name):
 
 def saveLink(session, url, path, name):
     global files
-    files.next()
+    next(files)
     fname = name.encode('utf-8').replace('/', '') + '.html'
     dst = path.encode('utf-8') + fname
     dst = dst.replace(':', '-').replace('"', '')
     try:
         with open(dst):
-            print '['+colors.OKBLUE+'skip'+colors.ENDC+'] |  |  +--%s' %name
+            print('['+colors.OKBLUE+'skip'+colors.ENDC+'] |  |  +--%s' %name)
             pass
     except IOError:
         with open(dst, 'wb') as handle:
-            print '['+colors.OKGREEN+'save'+colors.ENDC+'] |  |  +--%s' %name
+            print('['+colors.OKGREEN+'save'+colors.ENDC+'] |  |  +--%s' %name)
             r = session.get(url)
             soup = BeautifulSoup(r.text, 'html.parser')
             link = soup.find(class_='region-content').a['href']
             try:
-                handle.write(u'<a href="' + link.decode('utf-8') + u'">' + name.decode('utf-8') + u'</a>')
+                handle.write('<a href="' + link.decode('utf-8') + '">' + name.decode('utf-8') + '</a>')
             except UnicodeEncodeError:
                 os.remove(dst)
-                print '['+colors.FAIL+'fail'+colors.ENDC+'] |  |  +--%s' %name
+                print('['+colors.FAIL+'fail'+colors.ENDC+'] |  |  +--%s' %name)
                 pass
 
 
 def saveInfo(path, info, tab):
     if "Foren" not in info:
         global files
-        files.next()
-        name = u'info.txt'
+        next(files)
+        name = 'info.txt'
         dst = path + name
         dst = dst.replace(':', '-').replace('"', '')
         try:
             with open(dst):
-                print '['+colors.OKBLUE+'skip'+colors.ENDC+'] ' + tab + '+--%s' %name
+                print('['+colors.OKBLUE+'skip'+colors.ENDC+'] ' + tab + '+--%s' %name)
                 pass
         except IOError:
             with open(dst, 'wb') as handle:
-                print '['+colors.OKGREEN+'save'+colors.ENDC+'] ' + tab + '+--%s' %name
+                print('['+colors.OKGREEN+'save'+colors.ENDC+'] ' + tab + '+--%s' %name)
                 handle.write(info.encode('utf-8'))
 
 
@@ -160,7 +160,7 @@ def downloadResource(session, res, path):
         return
     r = session.get(src)
     if(r.status_code == 200):
-        headers = r.headers.keys()
+        headers = list(r.headers.keys())
         if ('content-disposition' in headers):
             #got a direct file link
             name = r.headers['content-disposition'].decode('utf-8').split(';')[1].split('=')[1].strip('"')
@@ -174,10 +174,10 @@ def downloadResource(session, res, path):
                 #it's obviously an ugly frameset site
                 src = soup.find_all('frame')[1]['src']
             name = os.path.basename(src)
-        name = urllib.url2pathname(name.encode('utf-8'))
+        name = urllib.request.url2pathname(name.encode('utf-8'))
         saveFile(session, src, path, name)
     else:
-        print 'ERROR: ' + str(r.status) + ' ' + r.reason
+        print('ERROR: ' + str(r.status) + ' ' + r.reason)
 	sys.exit()
 
 
@@ -190,7 +190,7 @@ def downloadSection(session, s, path):
         except AttributeError:
             pass
         else:
-            saveInfo(path, info, u'')
+            saveInfo(path, info, '')
 
         res = s.find_all(class_='activity resource modtype_resource ')
         for r in res:
@@ -200,16 +200,16 @@ def downloadSection(session, s, path):
         for f in folders:
             res = f.find_all(class_='fp-filename-icon')
             label = res.pop(0).text
-            path = root + u'/' + label.replace('/', '-')
-            path = urllib.url2pathname(path.encode('utf-8')).replace(':', '-').replace('"', '')
+            path = root + '/' + label.replace('/', '-')
+            path = urllib.request.url2pathname(path.encode('utf-8')).replace(':', '-').replace('"', '')
             if not os.path.exists(path):
                 os.makedirs(path)
-            print '       |  +--' + colors.BOLD + label + colors.ENDC
+            print('       |  +--' + colors.BOLD + label + colors.ENDC)
             for r in res:
-                downloadResource(session, r, path + u'/')
+                downloadResource(session, r, path + '/')
 
     else:
-        sections.next()
+        next(sections)
         s = list(s.children)[2]
         name = s.find(class_='sectionname').contents[0].replace('/', '-').strip().strip(':') + '/'
         info = ''
@@ -233,10 +233,10 @@ def downloadSection(session, s, path):
                 path = path.replace(':', '-').replace('"', '')
                 if not os.path.exists(path):
                     os.makedirs(path)
-        print '       |  +--' + colors.BOLD + name + colors.ENDC
+        print('       |  +--' + colors.BOLD + name + colors.ENDC)
 
         if len(info) > 0:
-            saveInfo(path, info, u'|  ')
+            saveInfo(path, info, '|  ')
 
         res = s.find_all(class_='activity resource modtype_resource ')
         for r in res:
@@ -259,12 +259,12 @@ def downloadCourse(session, c, sem):
     global sections
     files = itertools.count()
     sections = itertools.count()
-    name = c['key'].replace('/', '-') + u'/'
-    path = root + sem.replace('/', '-') + u'/' + name
-    path = urllib.url2pathname(path.encode('utf-8')).replace(':', '-').replace('"', '')
+    name = c['key'].replace('/', '-') + '/'
+    path = root + sem.replace('/', '-') + '/' + name
+    path = urllib.request.url2pathname(path.encode('utf-8')).replace(':', '-').replace('"', '')
     if not os.path.exists(path):
         os.makedirs(path)
-    print '       +--' + colors.BOLD + name + colors.ENDC
+    print('       +--' + colors.BOLD + name + colors.ENDC)
     r = session.get(c['url'])
     if(r.status_code == 200):
         soup = BeautifulSoup(r.text, 'html.parser')
@@ -280,74 +280,74 @@ def downloadCourse(session, c, sem):
             downloadSection(session, s, path)
         #print 'Saved ' + str(files.next()) + ' Files in ' + str(sections.next()) + ' Sections'
     else:
-        print 'ERROR: ' + str(r.status) + ' ' + r.reason
+        print('ERROR: ' + str(r.status) + ' ' + r.reason)
         sys.exit()
 
 
 
 
-print colors.HEADER
-print "      _____                    .___.__              "
-print "     /     \   ____   ____   __| _/|  |   ____      "
-print "    /  \ /  \ /  _ \ /  _ \ / __ | |  | _/ __ \     "
-print "   /    Y    (  <_> |  <_> ) /_/ | |  |_\  ___/     "
-print "   \____|__  /\____/ \____/\____ | |____/\___  >    "
-print "           \/                   \/           \/     "
-print "  _________                                         "
-print " /   _____/ ________________  ______   ___________  "
-print " \_____  \_/ ___\_  __ \__  \ \____ \_/ __ \_  __ \ "
-print " /        \  \___|  | \// __ \|  |_> >  ___/|  | \/ "
-print "/_______  /\___  >__|  (____  /   __/ \___  >__|    "
-print "        \/     \/           \/|__|        \/        "
-print colors.ENDC
+print(colors.HEADER)
+print("      _____                    .___.__              ")
+print("     /     \   ____   ____   __| _/|  |   ____      ")
+print("    /  \ /  \ /  _ \ /  _ \ / __ | |  | _/ __ \     ")
+print("   /    Y    (  <_> |  <_> ) /_/ | |  |_\  ___/     ")
+print("   \____|__  /\____/ \____/\____ | |____/\___  >    ")
+print("           \/                   \/           \/     ")
+print("  _________                                         ")
+print(" /   _____/ ________________  ______   ___________  ")
+print(" \_____  \_/ ___\_  __ \__  \ \____ \_/ __ \_  __ \ ")
+print(" /        \  \___|  | \// __ \|  |_> >  ___/|  | \/ ")
+print("/_______  /\___  >__|  (____  /   __/ \___  >__|    ")
+print("        \/     \/           \/|__|        \/        ")
+print(colors.ENDC)
 
 #logging in
-print "logging in..."
+print("logging in...")
 session = login(username, password)
 
 #get semesters
-print "getting Semesters..."
+print("getting Semesters...")
 sems = getSemesters(session)
 if not sems:
-    print colors.FAIL + 'No semester found - Quitting!' + colors.ENDC
+    print(colors.FAIL + 'No semester found - Quitting!' + colors.ENDC)
     sys.exit()
 else:
-    print colors.WARNING + 'Available semester:' + colors.ENDC
+    print(colors.WARNING + 'Available semester:' + colors.ENDC)
     for s in sorted(sems):
-        print '[' + s + ']: ' + sems[s]
+        print('[' + s + ']: ' + sems[s])
 
 #input loop
 ok = False
 while not ok:
-    s = raw_input(colors.WARNING + 'Select semester: ' + colors.ENDC)
-    ok = s in sems.keys()
+    s = input(colors.WARNING + 'Select semester: ' + colors.ENDC)
+    ok = s in list(sems.keys())
 
 #get courses
-print "getting Courses..."
+print("getting Courses...")
 courses = getCoursesForSem(session, s)
 if not courses:
-    print colors.FAIL + 'No courses in this semester - Quitting!' + colors.ENDC
+    print(colors.FAIL + 'No courses in this semester - Quitting!' + colors.ENDC)
     sys.exit()
 else:
-    print colors.WARNING + 'Available courses:' + colors.ENDC
+    print(colors.WARNING + 'Available courses:' + colors.ENDC)
     for c in courses:
-        print '[' + str(courses.index(c)) + ']: ' + c['key'] + '.' + str(c['sem']) + ': ' + c['name'] + ' (' + c['type'] + ')'
+        print('[' + str(courses.index(c)) + ']: ' + c['key'] + '.' + str(c['sem']) + ': ' + c['name'] + ' (' + c['type'] + ')')
 
 #confirmation
-c = raw_input(colors.WARNING + 'Choose number of course to download, (a) for all or (q) to quit: ' + colors.ENDC)
+c = input(colors.WARNING + 'Choose number of course to download, (a) for all or (q) to quit: ' + colors.ENDC)
 if c == 'a':
     for f in courses:
         try:
             downloadCourse(session, f, sems[s])
-            print colors.WARNING + 'Successfully processed ' + str(files.next()) + ' Files in ' + str(sections.next()) + ' Sections!' + colors.ENDC
+            print(colors.WARNING + 'Successfully processed ' + str(next(files)) + ' Files in ' + str(next(sections)) + ' Sections!' + colors.ENDC)
         except:
-            print "Error while processing!"
+            print("Error while processing!")
     quit()
 
 if c == 'q':
-    print colors.FAIL + 'Oh no? - Quitting!' + colors.ENDC
+    print(colors.FAIL + 'Oh no? - Quitting!' + colors.ENDC)
     quit()
 
 downloadCourse(session, courses.pop(int(c)), sems[s])
-print colors.WARNING + 'Successfully processed ' + str(files.next()) + ' Files in ' + str(sections.next()) + ' Sections!' + colors.ENDC
+print(colors.WARNING + 'Successfully processed ' + str(next(files)) + ' Files in ' + str(next(sections)) + ' Sections!' + colors.ENDC)
 
