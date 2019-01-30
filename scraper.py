@@ -270,11 +270,11 @@ def downloadSection(session, s, path):
         if len(info) > 0:
             saveInfo(path, info, '|  ')
 
-        res = s.find_all(class_='activity resource modtype_resource ')
+        res = s.find_all(class_='activity resource modtype_resource')
         for r in res:
             downloadResource(session, r, path)
         """
-        links = s.find_all(class_='activity url modtype_url ')
+        links = s.find_all(class_='activity url modtype_url')
         for l in links:
             ln = l.find(class_='instancename')
             ln.span.extract()
