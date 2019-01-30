@@ -190,10 +190,10 @@ def downloadResource(session, res, path):
     r = session.get(src)
     if(r.status_code == 200):
         headers = list(r.headers.keys())
-        if ('content-disposition' in headers):
+        if ('Content-Disposition' in headers):
             # got a direct file link
-            name = r.headers['content-disposition'].decode(
-                'utf-8').split(';')[1].split('=')[1].strip('"')
+            name = r.headers['Content-Disposition'].split(';')[1].split('=')[
+                1].strip('"')
         else:
             # got a preview page
             soup = BeautifulSoup(r.text, 'html.parser')
