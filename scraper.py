@@ -12,6 +12,10 @@ import configparser
 import datetime
 
 # read config
+if not os.path.isfile('scraper.conf'):
+    print("ERROR: Config not found! Copy `scraper.conf.sample` to `scraper.conf` and edit.")
+    sys.exit()
+
 config = configparser.RawConfigParser()
 config.read('scraper.conf')
 
