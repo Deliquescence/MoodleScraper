@@ -241,9 +241,8 @@ def downloadSection(session, s, path):
 
     else:
         next(sections)
-        s = list(s.children)[2]
-        name = s.find(class_='sectionname').contents[0].replace(
-            '/', '-').strip().strip(':') + '/'
+        s = s.find(class_='content')
+        name = s.find(class_='sectionname').text
         info = ''
         info = s.find(class_='summary').get_text().strip()
         if len(info) > 0:
