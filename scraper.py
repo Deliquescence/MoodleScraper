@@ -124,11 +124,11 @@ def saveFile(session, src, path, name):
     dst = path + name
     dst = dst.replace(':', '-').replace('"', '')
 
+    if os.path.exists(dst):
+        print('['+colors.OKBLUE+'skip'+colors.ENDC+'] |  |  +--%s' % name)
+        return
+
     try:
-        with open(dst):
-            print('['+colors.OKBLUE+'skip'+colors.ENDC+'] |  |  +--%s' % name)
-            pass
-    except IOError:
         with open(dst, 'wb') as handle:
             print('['+colors.OKGREEN+'save'+colors.ENDC+'] |  |  +--%s' % name)
             r = session.get(src, stream=True)
@@ -136,6 +136,8 @@ def saveFile(session, src, path, name):
                 if not block:
                     break
                 handle.write(block)
+    except IOError:
+        print("Error: couldn't save file %s" % name)
 
 
 def saveLink(session, url, path, name):
