@@ -224,23 +224,6 @@ def downloadSection(session, s, path):
         else:
             saveInfo(path, info, '')
 
-        res = s.find_all(class_='activity resource modtype_resource')
-        for r in res:
-            downloadResource(session, r, path)
-        folders = s.find_all(class_='activity folder modtype_folder')
-        root = path
-        for f in folders:
-            res = f.find_all(class_='fp-filename-icon')
-            label = res.pop(0).text
-            path = root + '/' + label.replace('/', '-')
-            path = urllib.request.url2pathname(
-                path).replace(':', '-').replace('"', '')
-            if not os.path.exists(path):
-                os.makedirs(path)
-            print('       |  +--' + colors.BOLD + label + colors.ENDC)
-            for r in res:
-                downloadResource(session, r, path + '/')
-
     else:
         next(sections)
         s = s.find(class_='content')
@@ -271,20 +254,49 @@ def downloadSection(session, s, path):
         if len(info) > 0:
             saveInfo(path, info, '|  ')
 
-        res = s.find_all(class_='activity resource modtype_resource')
-        for r in res:
-            downloadResource(session, r, path)
-        """
-        links = s.find_all(class_='activity url modtype_url')
-        for l in links:
-            ln = l.find(class_='instancename')
-            ln.span.extract()
-            saveLink(session, l.a['href'], path, ln.get_text())
-        """
+    res = s.find_all(class_='activity resource modtype_resource')
+    for r in res:
+        downloadResource(session, r, path)
+    folders = s.find_all(class_='activity folder modtype_folder')
+    root = path
+    for f in folders:
+        downloadFolder(session, f, root)
 
-        # remove empty folders
-        if os.listdir(path) == []:
-            os.rmdir(path)
+    """
+    links = s.find_all(class_='activity url modtype_url')
+    for l in links:
+        ln = l.find(class_='instancename')
+        ln.span.extract()
+        saveLink(session, l.a['href'], path, ln.get_text())
+    """
+
+    # remove empty folders
+    if os.listdir(path) == []:
+        os.rmdir(path)
+
+
+def downloadFolder(session, folder_link_item, root):
+    label = folder_link_item.find('span', class_='instancename').text
+
+    path = root + label.replace('/', '-') + '/'
+    path = urllib.request.url2pathname(
+        path).replace(':', '-').replace('"', '')
+    if not os.path.exists(path):
+        os.makedirs(path)
+    print('       |  +--' + colors.BOLD + label + colors.ENDC)
+
+    # Navigate to actual folder page
+    r = session.get(folder_link_item.find('a')['href'])
+
+    soup = BeautifulSoup(r.text, 'html.parser')
+    folder_contents = soup.find_all("span", class_='fp-filename-icon')
+
+    for item in folder_contents:
+        item_link = item.find('a')
+        item_name = item.find('span', class_='fp-filename').contents[0]
+        item_name = urllib.request.url2pathname(item_name)
+
+        saveFile(session, item_link['href'], path, item_name)
 
 
 def downloadCourse(session, c, sem):
