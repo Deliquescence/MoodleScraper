@@ -38,6 +38,10 @@ class colors:
     BOLD = '\033[1m'
 
 
+def encode_path(path):
+    return urllib.request.url2pathname(path.replace(':', '-').replace('"', ''))
+
+
 def login(user, pwd):
     # Get login token
     TOKEN_REGEX = r"<input type=\"hidden\" name=\"logintoken\" value=\"(.*)\">"
@@ -206,7 +210,7 @@ def downloadResource(session, res, path):
                 # it's obviously an ugly frameset site
                 src = soup.find_all('frame')[1]['src']
             name = os.path.basename(src)
-        name = urllib.request.url2pathname(name)
+        name = encode_path(name)
         saveFile(session, src, path, name)
     else:
         print('ERROR: ' + str(r.status) + ' ' + r.reason)
@@ -279,8 +283,8 @@ def downloadFolder(session, folder_link_item, root):
     label = folder_link_item.find('span', class_='instancename').text
 
     path = root + label.replace('/', '-') + '/'
-    path = urllib.request.url2pathname(
-        path).replace(':', '-').replace('"', '')
+    path = encode_path(path)
+
     if not os.path.exists(path):
         os.makedirs(path)
     print('       |  +--' + colors.BOLD + label + colors.ENDC)
@@ -294,7 +298,7 @@ def downloadFolder(session, folder_link_item, root):
     for item in folder_contents:
         item_link = item.find('a')
         item_name = item.find('span', class_='fp-filename').contents[0]
-        item_name = urllib.request.url2pathname(item_name)
+        item_name = encode_path(item_name)
 
         saveFile(session, item_link['href'], path, item_name)
 
@@ -306,7 +310,7 @@ def downloadCourse(session, c, sem):
     sections = itertools.count()
     name = c['key'].replace('/', '-') + '/'
     path = root + sem.replace('/', '-') + '/' + name
-    path = urllib.request.url2pathname(path).replace(':', '-').replace('"', '')
+    path = encode_path(path)
 
     if not os.path.exists(path):
         os.makedirs(path)
